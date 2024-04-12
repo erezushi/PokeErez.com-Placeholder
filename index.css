@@ -2,24 +2,25 @@ body {
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 
-div.border {
-    height: 30vh;
+body div {
     width: 50vw;
     margin: auto;
+}
+
+div.border {
+    height: 20vh;
     display: flex;
     align-items: center;
     justify-content: center;
 
     border: 3px solid black;
-    border-radius: 2em;
+    border-radius: 1em;
 
     font-size: xx-large;
 }
 
 div.logo {
-    width: 50vw;
-    height: 30vh;
-    margin: auto;
+    height: 20vh;
 
     font-size: 80pt;
 }
@@ -27,4 +28,9 @@ div.logo {
 div.logo > img {
     width: 100px;
     height: 100px;
+}
+
+div.footnote {
+    text-align: center;
+    margin-top: 1em;
 }
