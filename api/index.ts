@@ -135,10 +135,10 @@ const pokeErezPokedex = async (request: VercelRequest, response: VercelResponse)
         }
     } else {
         console.log("No Pokémon argument. Help message");
-        response.end(`Syntax: !pokedex [pokemon] [form] [info].
+        response.end(`Syntax: !pokedex [pokemon] [info] [form].
         pokemon: Pokémon name or natDex number.
-        form: Pokémon form, use 'default' for regular/no form.
-        info: generic/evolution/numbers`);
+        info: generic/evolution/numbers.
+        form: Pokémon form, use 'default' for regular/no form.`);
     }
 };
 
