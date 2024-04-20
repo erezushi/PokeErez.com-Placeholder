@@ -1,0 +1,30 @@
+{
+  "name": "pokeerez-pokedex-api",
+  "version": "1.0.0",
+  "description": "PokéErez's Pokédex API",
+  "main": "index.ts",
+  "scripts": {
+    "start": "node --loader ts-node/esm index.ts",
+    "lint:fix": "eslint --fix ."
+  },
+  "keywords": [
+    "pokedex",
+    "serverless"
+  ],
+  "author": "PokeErez",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.8",
+    "lodash": "^4.17.21",
+    "pokedex-promise-v2": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.17.0",
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "@vercel/node": "^3.0.27",
+    "eslint": "^8.9.0",
+    "eslint-plugin-import": "^2.25.4",
+    "typescript": "^4.9.0"
+  }
+}
