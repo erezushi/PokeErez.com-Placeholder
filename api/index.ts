@@ -31,10 +31,14 @@ const pokeErezPokedex = async (request: VercelRequest, response: VercelResponse)
                 ? form.toLowerCase()
                 : null;
 
+        const usedPokemon = pokemon === "random"
+            ? (Math.floor(Math.random() * 1025) + 1).toString()
+            : pokemon
+
         try {
             const pokemonRequestStartTime = Date.now();
             const apiPokemon = await pokedex.get<Pokemon>(
-                `/pokemon/${pokemon.toLowerCase()}${usedForm ? `-${usedForm}` : ""}`
+                `/pokemon/${usedPokemon.toLowerCase()}${usedForm ? `-${usedForm}` : ""}`
             );
 
             console.log(
@@ -43,7 +47,7 @@ const pokeErezPokedex = async (request: VercelRequest, response: VercelResponse)
 
             const pokemonSpeciesRequestStartTime = Date.now();
             const apiPokemonSpecies = await pokedex.get<PokemonSpecies>(
-                `/pokemon-species/${pokemon.toLowerCase()}`
+                `/pokemon-species/${usedPokemon.toLowerCase()}`
             );
 
             console.log(
