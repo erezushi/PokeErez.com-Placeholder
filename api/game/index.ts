@@ -127,7 +127,9 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
         await sql('TRUNCATE TABLE "Choice"');
 
         response.send(
-          `That's right! The Pokémon was ${choice.pokemonName}! ${user} has guessed correctly ${newScore} times`
+          `That's right! The Pokémon was ${
+            choice.pokemonName
+          }! ${user} has guessed correctly ${newScore} time${newScore === 1 ? '' : 's'}`
         );
 
         return;
