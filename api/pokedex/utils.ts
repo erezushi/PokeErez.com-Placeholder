@@ -1,9 +1,9 @@
 import {startCase} from "lodash";
-import {ChainEvolvesTo, PurpleEvolutionDetail} from "pokedex-promise-v2";
+import {Chain, EvolutionDetail} from "pokedex-promise-v2";
 
 export const vowels = /^[AEIOUaeiou]/;
 
-const detailsParser = (detailsObject: PurpleEvolutionDetail) => {
+const detailsParser = (detailsObject: EvolutionDetail) => {
     let text: string;
 
     switch (detailsObject.trigger.name) {
@@ -167,7 +167,7 @@ const locations: Record<string, string[]> = {
     "a snowy mountain peak": ["mount-lanakila"],
 };
 
-export const chainFormatter = (chainObject: ChainEvolvesTo): string => {
+export const chainFormatter = (chainObject: Chain): string => {
     let text = startCase(chainObject.species.name);
 
     if (chainObject.evolution_details.length) {
