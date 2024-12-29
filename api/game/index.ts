@@ -191,8 +191,8 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
       break;
 
     case 'reset':
-      await sql('TRUNCATE TABLE "Choice"');
-      response.send('choice table truncated');
+      await sql(`DELETE FROM "Scores" WHERE id='PokéErez'`);
+      response.send('Deleted score from Erez');
 
       break;
 
