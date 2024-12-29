@@ -15,7 +15,9 @@
   "license": "ISC",
   "dependencies": {
     "@erezushi/pokemon-randomizer": "^1.14.0",
+    "@neondatabase/serverless": "^0.10.4",
     "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
     "lodash": "^4.17.21",
     "pokedex-promise-v2": "^4.2.1",
     "romans": "^3.0.0"

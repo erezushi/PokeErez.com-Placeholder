@@ -1,26 +1,27 @@
-import randomPokemon, { getGenerations, getTypes } from '@erezushi/pokemon-randomizer';
-import { VercelRequest, VercelResponse } from '@vercel/node';
 import _ from 'lodash';
-import fs from 'fs';
-import { romanize } from 'romans';
-import { PokemonSpecies } from 'pokedex-promise-v2';
 import axios from 'axios';
+import dotenv from 'dotenv';
+import randomPokemon, { getGenerations, getTypes } from '@erezushi/pokemon-randomizer';
+import { neon } from '@neondatabase/serverless';
+import { PokemonSpecies } from 'pokedex-promise-v2';
+import { romanize } from 'romans';
+import { VercelRequest, VercelResponse } from '@vercel/node';
 
-const CHOICE_FILE = './api/game/choice.json';
-const LEADERBOARD_FILE = './api/game/leaderboard.json';
+dotenv.config();
 
-type Choice = {
-  pokemon: string;
-  guesses: string[];
-};
+const { DATABASE_URL } = process.env;
+
+const sql = neon(DATABASE_URL!);
 
 const gameApi = async (request: VercelRequest, response: VercelResponse) => {
   response.setHeader('Content-Type', 'text/plain');
 
   const { action, user } = request.query;
 
+  const choice = (await sql('SELECT * FROM "Choice"'))[0];
+
   if (!action || _.isArray(action)) {
-    if (fs.existsSync(CHOICE_FILE)) {
+    if (choice) {
       response.send("Game is running, try '!guesswho guess [Pokémon]'");
     } else {
       response.send("No game is running, try '!guesswho start [Gen/type]'");
@@ -37,7 +38,7 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
 
   switch (action) {
     case 'start':
-      if (fs.existsSync(CHOICE_FILE)) {
+      if (choice) {
         response.send("Game is already running, try '!guesswho guess [Pokémon]'");
 
         return;
@@ -61,10 +62,9 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
 
         const pokemon = randomPokemon({ generations: [filter], amount: 1 })[0];
 
-        fs.writeFileSync(
-          CHOICE_FILE,
-          JSON.stringify({ pokemon: pokemon.name, guesses: [] }, null, 2)
-        );
+        await sql(`INSERT INTO "Choice" ("pokemonName", "guesses")
+          VALUES ('${pokemon.name}', ARRAY[]::text[])`);
+
         response.send(
           `Pokémon chosen, Typing: ${_.startCase(pokemon.type)
             .split(' ')
@@ -79,10 +79,9 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
       if (Object.keys(types).includes(filter.toLowerCase())) {
         const pokemon = randomPokemon({ type: filter, amount: 1 })[0];
 
-        fs.writeFileSync(
-          CHOICE_FILE,
-          JSON.stringify({ pokemon: pokemon.name, guesses: [] }, null, 2)
-        );
+        await sql(`INSERT INTO "Choice" ("pokemonName", "guesses")
+          VALUES ('${pokemon.name}', ARRAY[]::text[])`);
+
         response.send(
           `Pokémon chosen, Gen ${romanize(
             Number(
@@ -102,34 +101,33 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
       break;
 
     case 'guess':
-      if (!fs.existsSync(CHOICE_FILE)) {
+      if (!choice) {
         response.send("Game is not running, try '!guesswho start [Gen/type]'");
 
         return;
       }
-
-      const choice = JSON.parse(fs.readFileSync(CHOICE_FILE, 'utf-8')) as Choice;
-
       const { payload: guess } = request.query;
+
       if (!guess || _.isArray(guess)) {
         response.send("You're guessing nothing? A bit pointless, no?");
 
         return;
       }
 
-      if (guess.toLowerCase() === choice.pokemon.toLowerCase()) {
-        const leaderboard = JSON.parse(fs.readFileSync(LEADERBOARD_FILE, 'utf-8')) as Record<
-          string,
-          number
-        >;
-        const score = (leaderboard[user] ?? 0) + 1;
-        leaderboard[user] = score;
+      if (guess.toLowerCase() === choice.pokemonName.toLowerCase()) {
+        const scoreRow = (await sql(`SELECT * FROM "Scores" WHERE id='${user}'`))[0];
 
-        fs.writeFileSync(LEADERBOARD_FILE, JSON.stringify(leaderboard, null, 2));
+        const newScore = (scoreRow?.score ?? 0) + 1;
 
-        fs.unlinkSync(CHOICE_FILE);
+        await sql(`INSERT INTO "Scores" (id, score)
+          VALUES ('${user}', ${newScore})
+          ON CONFLICT (id)
+          DO UPDATE SET score = ${newScore}`);
+
+        await sql('TRUNCATE TABLE "Choice"');
+
         response.send(
-          `That's right! The Pokémon was ${choice.pokemon}! ${user} has guessed correctly ${score} times`
+          `That's right! The Pokémon was ${choice.pokemonName}! ${user} has guessed correctly ${newScore} times`
         );
 
         return;
@@ -141,25 +139,24 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
         return;
       }
 
-      choice.guesses.push(guess.toLowerCase());
-      fs.writeFileSync(CHOICE_FILE, JSON.stringify(choice, null, 2));
+      await sql(`UPDATE "Choice" SET guesses = array_append(guesses, '${guess.toLowerCase()}')`);
 
       response.send(`Nope, it's not ${_.startCase(guess)}, continue guessing!`);
 
       break;
 
     case 'hint':
-      if (!fs.existsSync(CHOICE_FILE)) {
+      if (!choice) {
         response.send("Game is not running, try '!guesswho start [Gen/type]'");
 
         return;
       }
 
-      const chosenPokemon = JSON.parse(fs.readFileSync(CHOICE_FILE, 'utf-8')) as Choice;
-
-      const species = (await axios.get<PokemonSpecies>(
-        `https://pokeapi.co/api/v2/pokemon-species/${chosenPokemon.pokemon.toLowerCase()}`
-      )).data;
+      const species = (
+        await axios.get<PokemonSpecies>(
+          `https://pokeapi.co/api/v2/pokemon-species/${choice.pokemonName.toLowerCase()}`
+        )
+      ).data;
 
       const englishDexEntries = species.flavor_text_entries.filter(
         (entry) => entry.language.name === 'en'
@@ -169,7 +166,7 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
 
       response.send(
         randomEntry
-          .replace(new RegExp(chosenPokemon.pokemon, 'gi'), '[Pokémon]')
+          .replace(new RegExp(choice.pokemonName, 'gi'), '[Pokémon]')
           .replaceAll('\n', ' ')
           .substring(0, 400)
       );
@@ -177,23 +174,23 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
       break;
 
     case 'leaderboard':
-      const leaderboard = JSON.parse(fs.readFileSync(LEADERBOARD_FILE, 'utf-8')) as Record<
-        string,
-        number
-      >;
+      const topScores = await sql('SELECT * FROM "Scores" ORDER BY score DESC LIMIT 5');
 
       response.send(
-        `Top guessers:\n${Object.entries(leaderboard)
-          .sort((current, next) => next[1] - current[1])
-          .slice(0, 5)
-          .map(([user, score], index) => `#${index + 1} ${user}- ${score} guesses`)
+        `Top guessers:\n${topScores
+          .map(
+            (scoreObj, index) =>
+              `#${index + 1} ${scoreObj.id} - ${scoreObj.score} guess${
+                scoreObj.score !== 1 ? 'es' : ''
+              }`
+          )
           .join('\n')}`
       );
       break;
 
     case 'reset':
-      fs.unlinkSync(CHOICE_FILE);
-      response.send('choice.json deleted');
+      await sql('TRUNCATE TABLE "Choice"');
+      response.send('choice table truncated');
 
       break;
 
