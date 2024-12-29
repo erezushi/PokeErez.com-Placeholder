@@ -14,17 +14,19 @@
   "author": "PokeErez",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.7.7",
+    "@erezushi/pokemon-randomizer": "^1.14.0",
+    "axios": "^1.7.9",
     "lodash": "^4.17.21",
-    "pokedex-promise-v2": "^4.2.0"
+    "pokedex-promise-v2": "^4.2.1",
+    "romans": "^3.0.0"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.13",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
-    "@vercel/node": "^3.2.24",
+    "@vercel/node": "^4.0.0",
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.31.0",
-    "typescript": "^4.9.0"
+    "typescript": "^5.7.2"
   }
 }
