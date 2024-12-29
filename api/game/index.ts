@@ -3,7 +3,8 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import _ from 'lodash';
 import fs from 'fs';
 import { romanize } from 'romans';
-import PokeAPI from 'pokedex-promise-v2';
+import { PokemonSpecies } from 'pokedex-promise-v2';
+import axios from 'axios';
 
 const CHOICE_FILE = './api/game/choice.json';
 const LEADERBOARD_FILE = './api/game/leaderboard.json';
@@ -12,8 +13,6 @@ type Choice = {
   pokemon: string;
   guesses: string[];
 };
-
-const pokedex = new PokeAPI();
 
 const gameApi = async (request: VercelRequest, response: VercelResponse) => {
   response.setHeader('Content-Type', 'text/plain');
@@ -158,7 +157,9 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
 
       const chosenPokemon = JSON.parse(fs.readFileSync(CHOICE_FILE, 'utf-8')) as Choice;
 
-      const species = await pokedex.getPokemonSpeciesByName(chosenPokemon.pokemon.toLowerCase());
+      const species = (await axios.get<PokemonSpecies>(
+        `https://pokeapi.co/api/v2/pokemon-species/${chosenPokemon.pokemon.toLowerCase()}`
+      )).data;
 
       const englishDexEntries = species.flavor_text_entries.filter(
         (entry) => entry.language.name === 'en'
