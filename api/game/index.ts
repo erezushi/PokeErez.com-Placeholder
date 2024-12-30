@@ -7,6 +7,15 @@ import { PokemonSpecies } from 'pokedex-promise-v2';
 import { romanize } from 'romans';
 import { VercelRequest, VercelResponse } from '@vercel/node';
 
+type Choice = {
+  pokemonName: string;
+  guesses: string[];
+};
+type Score = {
+  id: string;
+  score: number;
+};
+
 dotenv.config();
 
 const { DATABASE_URL } = process.env;
@@ -18,7 +27,7 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
 
   const { action, user } = request.query;
 
-  const choice = (await sql('SELECT * FROM "Choice"'))[0];
+  const choice = (await sql('SELECT * FROM "Choice"'))[0] as Choice;
 
   if (!action || _.isArray(action)) {
     if (choice) {
@@ -115,7 +124,7 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
       }
 
       if (guess.toLowerCase() === choice.pokemonName.toLowerCase()) {
-        const scoreRow = (await sql(`SELECT * FROM "Scores" WHERE id='${user}'`))[0];
+        const scoreRow = (await sql(`SELECT * FROM "Scores" WHERE id='${user}'`))[0] as Score;
 
         const newScore = (scoreRow?.score ?? 0) + 1;
 
@@ -176,7 +185,9 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
       break;
 
     case 'leaderboard':
-      const topScores = await sql('SELECT * FROM "Scores" ORDER BY score DESC LIMIT 5');
+      const topScores = (await sql(
+        'SELECT * FROM "Scores" ORDER BY score DESC LIMIT 5'
+      )) as Score[];
 
       response.send(
         `Top guessers:\n${topScores
@@ -191,11 +202,12 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
       break;
 
     case 'reset':
+      await sql('TRUNCATE TABLE "Choice"');
       await sql(`DELETE FROM "Scores" WHERE id='PokéErez'`);
-      response.send('Deleted score from Erez');
+      response.send('Truncated Choice table and deleted score from Erez');
 
       break;
-
+    
     default:
       break;
   }
