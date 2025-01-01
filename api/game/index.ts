@@ -6,6 +6,7 @@ import { neon } from '@neondatabase/serverless';
 import { PokemonSpecies } from 'pokedex-promise-v2';
 import { romanize } from 'romans';
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { Redis } from '@upstash/redis';
 
 type Choice = {
   pokemonName: string;
@@ -18,9 +19,14 @@ type Score = {
 
 dotenv.config();
 
-const { DATABASE_URL } = process.env;
+const { DATABASE_URL, KV_REST_API_TOKEN, KV_REST_API_URL } = process.env;
 
 const sql = neon(DATABASE_URL!);
+
+const redis = new Redis({
+  url: KV_REST_API_URL,
+  token: KV_REST_API_TOKEN,
+});
 
 const gameApi = async (request: VercelRequest, response: VercelResponse) => {
   response.setHeader('Content-Type', 'text/plain');
@@ -73,6 +79,15 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
 
         await sql(`INSERT INTO "Choice" ("pokemonName", "guesses")
           VALUES ('${pokemon.name}', ARRAY[]::text[])`);
+          
+        await redis.set('lastAction', {
+          action,
+          payload: {
+            chosen: filter,
+            generated: _.startCase(pokemon.type),
+          },
+          user,
+        });
 
         response.send(
           `Pokémon chosen, Typing: ${_.startCase(pokemon.type)
@@ -91,14 +106,22 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
         await sql(`INSERT INTO "Choice" ("pokemonName", "guesses")
           VALUES ('${pokemon.name}', ARRAY[]::text[])`);
 
+        const generatedGen = Object.entries(generations).find(
+          ([num, genObject]) => pokemon.dexNo >= genObject.first && pokemon.dexNo <= genObject.last
+        )![0];
+        
+        await redis.set('lastAction', {
+          action,
+          payload: {
+            chosen: filter,
+            generated: generatedGen,
+          },
+          user,
+        });
+
         response.send(
           `Pokémon chosen, Gen ${romanize(
-            Number(
-              Object.entries(generations).find(
-                ([num, genObject]) =>
-                  pokemon.dexNo >= genObject.first && pokemon.dexNo <= genObject.last
-              )![0]
-            )
+            Number(generatedGen)
           )}. use '!guesswho guess [Pokémon]' to place your guesses!`
         );
 
@@ -135,6 +158,15 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
 
         await sql('TRUNCATE TABLE "Choice"');
 
+        await redis.set('lastAction', {
+          action,
+          payload: {
+            guess,
+            success: true,
+          },
+          user,
+        });
+
         response.send(
           `That's right! The Pokémon was ${
             choice.pokemonName
@@ -151,6 +183,15 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
       }
 
       await sql(`UPDATE "Choice" SET guesses = array_append(guesses, '${guess.toLowerCase()}')`);
+
+      await redis.set('lastAction', {
+        action,
+        payload: {
+          guess,
+          success: false,
+        },
+        user,
+      });
 
       response.send(`Nope, it's not ${_.startCase(guess)}, continue guessing!`);
 
@@ -204,6 +245,9 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
     case 'reset':
       await sql('TRUNCATE TABLE "Choice"');
       await sql(`DELETE FROM "Scores" WHERE id='PokéErez'`);
+
+      await redis.set('lastAction', { action, payload: {}, user });
+
       response.send('Truncated Choice table and deleted score from Erez');
 
       break;
