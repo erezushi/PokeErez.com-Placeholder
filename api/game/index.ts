@@ -29,7 +29,7 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
 
   const choice = (await sql('SELECT * FROM "Choice"'))[0] as Choice;
 
-  if (!action || _.isArray(action)) {
+  if (!action || action === 'null' || _.isArray(action)) {
     if (choice) {
       response.send("Game is running, try '!guesswho guess [Pokémon]'");
     } else {
@@ -54,7 +54,7 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
       }
 
       const { payload: filter } = request.query;
-      if (!filter || _.isArray(filter)) {
+      if (!filter || filter === 'null' || _.isArray(filter)) {
         response.send('Please choose either a generation or a type of Pokémon to play.');
 
         return;
@@ -117,7 +117,7 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
       }
       const { payload: guess } = request.query;
 
-      if (!guess || _.isArray(guess)) {
+      if (!guess || guess === 'null' || _.isArray(guess)) {
         response.send("You're guessing nothing? A bit pointless, no?");
 
         return;
