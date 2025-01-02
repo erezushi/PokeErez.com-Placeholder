@@ -253,6 +253,8 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
       break;
     
     default:
+      response.send('Action not recognized');
+
       break;
   }
 };
