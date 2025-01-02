@@ -28,6 +28,8 @@ const redis = new Redis({
   token: KV_REST_API_TOKEN,
 });
 
+const answerFormat = (name: string) => name.toLowerCase().replace(/[:.']/, '').replaceAll('é', 'e');
+
 const gameApi = async (request: VercelRequest, response: VercelResponse) => {
   response.setHeader('Content-Type', 'text/plain');
 
@@ -79,7 +81,7 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
 
         await sql(`INSERT INTO "Choice" ("pokemonName", "guesses")
           VALUES ('${pokemon.name}', ARRAY[]::text[])`);
-          
+
         await redis.set('lastAction', {
           action,
           payload: {
@@ -109,7 +111,7 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
         const generatedGen = Object.entries(generations).find(
           ([num, genObject]) => pokemon.dexNo >= genObject.first && pokemon.dexNo <= genObject.last
         )![0];
-        
+
         await redis.set('lastAction', {
           action,
           payload: {
@@ -146,7 +148,9 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
         return;
       }
 
-      if (guess.toLowerCase() === choice.pokemonName.toLowerCase()) {
+      const formattedGuess = answerFormat(guess);
+
+      if (formattedGuess === answerFormat(choice.pokemonName)) {
         const scoreRow = (await sql(`SELECT * FROM "Scores" WHERE id='${user}'`))[0] as Score;
 
         const newScore = (scoreRow?.score ?? 0) + 1;
@@ -176,7 +180,7 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
         return;
       }
 
-      if (choice.guesses.includes(guess.toLowerCase())) {
+      if (choice.guesses.includes(formattedGuess)) {
         response.send('Someone already guessed that, try something else');
 
         return;
@@ -251,7 +255,7 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
       response.send('Truncated Choice table and deleted score from Erez');
 
       break;
-    
+
     default:
       response.send('Action not recognized');
 
