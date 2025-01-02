@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import axios from 'axios';
 import dotenv from 'dotenv';
-import randomPokemon, { getGenerations, getTypes } from '@erezushi/pokemon-randomizer';
+import randomPokemon, { getGenerations, getPokemon, getTypes } from '@erezushi/pokemon-randomizer';
 import { neon } from '@neondatabase/serverless';
 import { PokemonSpecies } from 'pokedex-promise-v2';
 import { romanize } from 'romans';
@@ -186,18 +186,28 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
         return;
       }
 
-      await sql(`UPDATE "Choice" SET guesses = array_append(guesses, '${guess.toLowerCase()}')`);
+      const pokemonList = getPokemon();
 
-      await redis.set('lastAction', {
-        action,
-        payload: {
-          guess,
-          success: false,
-        },
-        user,
-      });
+      if (
+        Object.values(pokemonList).some((pokemon) => {
+          answerFormat(pokemon.name) === formattedGuess;
+        })
+      ) {
+        await sql(`UPDATE "Choice" SET guesses = array_append(guesses, '${formattedGuess}')`);
 
-      response.send(`Nope, it's not ${_.startCase(guess)}, continue guessing!`);
+        await redis.set('lastAction', {
+          action,
+          payload: {
+            guess,
+            success: false,
+          },
+          user,
+        });
+
+        response.send(`Nope, it's not ${_.startCase(guess)}, continue guessing!`);
+      }
+
+      response.send("Hmm.. I don't seem to recognize this Pokémon");
 
       break;
 
