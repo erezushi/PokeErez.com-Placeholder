@@ -231,14 +231,14 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
       )) as Score[];
 
       response.send(
-        `Top guessers:\n${topScores
+        `Top guessers: \n${topScores
           .map(
             (scoreObj, index) =>
               `#${index + 1} ${scoreObj.id} - ${scoreObj.score} guess${
                 scoreObj.score !== 1 ? 'es' : ''
               }`
           )
-          .join('\n')}`
+          .join('; \n')}`
       );
       break;
 
