@@ -20,6 +20,7 @@
     "axios": "^1.7.9",
     "dotenv": "^16.4.7",
     "lodash": "^4.17.21",
+    "nanoid": "^5.0.9",
     "pokedex-promise-v2": "^4.2.1",
     "romans": "^3.0.0"
   },
