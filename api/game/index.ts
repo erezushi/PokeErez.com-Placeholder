@@ -240,9 +240,9 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
       const pokemonList = getPokemon();
 
       if (
-        Object.values(pokemonList).some((pokemon) => {
-          answerFormat(pokemon.name) === formattedGuess;
-        })
+        Object.values(pokemonList).some((pokemon) => 
+          answerFormat(pokemon.name) === formattedGuess
+        )
       ) {
         await sql(
           `UPDATE "Choice" SET guesses = array_append(guesses, '${formattedGuess}') WHERE key='${key}'`
@@ -258,6 +258,8 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
         });
 
         response.send(`Nope, it's not ${_.startCase(guess)}, continue guessing!`);
+
+        return;
       }
 
       response.send("Hmm.. I don't seem to recognize this Pokémon");
