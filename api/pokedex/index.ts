@@ -1,7 +1,7 @@
 import type { EvolutionChain, Pokemon, PokemonSpecies } from "pokedex-promise-v2";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { capitalize, isArray, startCase } from "lodash";
-import { chainFormatter, pokedexGames, vowels } from "./utils";
+import { chainFormatter, pokedexGames, vowels } from "./_utils";
 import axios from "axios";
 
 const pokedex = axios.create({
