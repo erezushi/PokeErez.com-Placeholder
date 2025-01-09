@@ -36,7 +36,7 @@ const redis = new Redis({
 });
 
 const answerFormat = (name: string) =>
-  name.toLowerCase().replace(' ', '-').replaceAll(/[:.']/, '').replaceAll('é', 'e');
+  name.toLowerCase().replace(' ', '-').replaceAll(/[:.']/g, '').replaceAll('é', 'e');
 
 const gameApi = async (request: VercelRequest, response: VercelResponse) => {
   response.setHeader('Content-Type', 'text/plain');
