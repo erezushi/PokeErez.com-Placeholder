@@ -9,15 +9,15 @@ The API is available on https://pokeerez.com/api/game
 All requests to the API must include the query parameters `action` _(what you want to do)_ and `user` _(YouTube/Twitch username of the sender)_. Some actions also require a `payload` parameter.
 
 **Table of Contents**
-- [Setup the Game](#setup-the-game)
+- [Setting Up the Game](#setting-up-the-game)
 - [Playing the Game](#playing-the-game)
 - [Action Summary](#action-summary)
 - [Chatbot Integration](#chatbot-integration)
 - [Using the Announcer](#using-the-announcer)
 
-## Setup the Game
+## Setting Up the Game
 
-If you want to play this on your own stream, you'd have to set yourself as a game manager an obtain a game key, which can be done by sending a GET request _(through a browser, Postman, or any other means)_ to the above address with `action` set to `key`, and `user` set to your own username.
+If you want to play this on your own stream, you'd have to set yourself as a game manager and obtain a game key, which can be done by sending a GET request to _(AKA visit on a browser)_ the above address with `action` set to `key`, and `user` set to your own username.
 
 **Example**
 
@@ -25,17 +25,17 @@ If you want to play this on your own stream, you'd have to set yourself as a gam
 https://pokeerez.com/api/game?action=key&user=PokéErez
 ```
 
-The API will respond confirming the user has been set as manager and return the game key, which consists of 21 Upper- & lower-case letters, numbers, dashes and underscores.
+The game will respond confirming the user has been set as manager and return the game key, which consists of 21 Upper- & lower-case letters, numbers, dashes and underscores.
 
 **Pay attention**: The key will only appear once, so make sure to save it somewhere you'll be able to retrieve it from later. Sending the same request a second time will be responded with `Username already registered`.
 
-All actions other than `key` must also include the `key` query parameter, set to the game key you've obtained in the previous step.
+All actions other than `key` must also include the `key` query parameter, set to the game key you've obtained in this step.
 
 ## Playing the Game
 
 [For a summary](#action-summary)
 
-To start a game, use the `start` action. Set `payload` to either a Pokémon type, or a generation number. The API will generate a random Pokémon matching the given filter, and will supply the other bit of information.
+To start a game, use the `start` action. Set `payload` to either a Pokémon type, or a generation number. The game will generate a random Pokémon matching the given filter, and will supply the other bit of information.
 
 You can request hints in the form of a random Pokédex entry of the chosen Pokémon _(with its name replaced with `[Pokémon]` if it appears)_. To do so, use the `hint` action.
 
@@ -43,7 +43,7 @@ To guess a Pokémon, use the `guess` action, with the guess going into `payload`
 
 On a successful guess, the game will award the guesser _(`user`)_ with a point for your game key, and reset the game.
 
-A wrong guess will just receive a corresponding response. The game tracks which Pokémon have been guessed in each game _(but not who made each guess)_, so a duplicate guess will be recognized.
+A wrong guess will just receive a corresponding response. The game tracks which Pokémon have been guessed in each game _(but not who made each guess)_, so a duplicate guess will be responded accordingly.
 
 Two more actions are available in the API, even when a game is not running. `leaderboard` can be used to retrieve the top five guessers for your game key, and `reset`, which can only be used by the game manager, will end a game prematurely, and if `payload` is set to `true`, delete the manager's score from their game key as well.
 
@@ -111,7 +111,7 @@ $(customapi https://pokeerez.com/api/game?action=$(index1 null)&payload=$(index2
 
 Alongside the game responses, which chatbots receive, there is also a service for displaying the state of a game in a way that can be put into various streaming software.
 
-To use it, add a Browser Source to your scene _(or whatever the equivalent of it in your streaming software)_, and set it to
+To use it, add a Browser Source to your scene _(or whatever the equivalents of them are in your streaming software)_, and set it to
 ```
 https://announcer.pokeerez.com/?key=[game key]
 ```
