@@ -35,8 +35,23 @@ const redis = new Redis({
   token: KV_REST_API_TOKEN,
 });
 
-const answerFormat = (name: string) =>
-  name.toLowerCase().replace(' ', '-').replaceAll(/[:.']/g, '').replaceAll('é', 'e');
+const answerReplacements = new Map<string | RegExp, string>([
+  [' ', '-'],
+  [/[:.']/g, ''],
+  ['é', 'e'],
+  ['♀', '-f'],
+  ['♂', '-m'],
+]);
+
+const answerFormat = (name: string) => {
+  let nameCopy = name.toLowerCase();
+
+  answerReplacements.forEach((value, key) => {
+    nameCopy.replace(key, value);
+  });
+
+  return nameCopy;
+};
 
 const gameApi = async (request: VercelRequest, response: VercelResponse) => {
   response.setHeader('Content-Type', 'text/plain');
@@ -240,9 +255,7 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
       const pokemonList = getPokemon();
 
       if (
-        Object.values(pokemonList).some((pokemon) => 
-          answerFormat(pokemon.name) === formattedGuess
-        )
+        Object.values(pokemonList).some((pokemon) => answerFormat(pokemon.name) === formattedGuess)
       ) {
         await sql(
           `UPDATE "Choice" SET guesses = array_append(guesses, '${formattedGuess}') WHERE key='${key}'`
@@ -275,7 +288,7 @@ const gameApi = async (request: VercelRequest, response: VercelResponse) => {
 
       const species = (
         await axios.get<PokemonSpecies>(
-          `https://pokeapi.co/api/v2/pokemon-species/${choice.pokemonName.toLowerCase()}`
+          `https://pokeapi.co/api/v2/pokemon-species/${answerFormat(choice.pokemonName)}`
         )
       ).data;
 
