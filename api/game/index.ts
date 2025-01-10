@@ -36,7 +36,6 @@ const redis = new Redis({
 });
 
 const answerReplacements = new Map<string | RegExp, string>([
-  [' ', '-'],
   [/[:.']/g, ''],
   ['é', 'e'],
   ['♀', '-f'],
@@ -44,7 +43,7 @@ const answerReplacements = new Map<string | RegExp, string>([
 ]);
 
 const answerFormat = (name: string) => {
-  let nameCopy = name.toLowerCase();
+  let nameCopy = name.toLowerCase().replace(' ', '-');
 
   answerReplacements.forEach((value, key) => {
     nameCopy.replace(key, value);
