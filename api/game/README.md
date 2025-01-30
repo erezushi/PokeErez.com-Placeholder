@@ -109,7 +109,7 @@ $(customapi https://pokeerez.com/api/game?action=$(index1 null)&payload=$(index2
 
 ## Using the Announcer
 
-Alongside the game responses, which chatbots receive, there is also a service for displaying the state of a game in a way that can be put into various streaming software.
+Alongside the game responses, which chatbots receive, there is also a service for displaying the state of a game in a way that can be put into various streaming softwares.
 
 To use it, add a Browser Source to your scene _(or whatever the equivalents of them are in your streaming software)_, and set it to
 ```
@@ -117,3 +117,5 @@ https://announcer.pokeerez.com/?key=[game key]
 ```
 
 The source would automatically connect to your game and display a message whenever a game is running, and whenever someone makes a guess.
+
+Additionally, you can use the announcer in Always On mode by adding `&alwaysOn=true` to the Browser Source URL, which would display a message even when a game is not running, letting people know they can start one.
